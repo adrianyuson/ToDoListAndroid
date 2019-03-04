@@ -5,6 +5,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -23,6 +24,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -103,43 +106,50 @@ public class MainActivity extends AppCompatActivity {
     private void addTask() {
         String task = editTextTask.getText().toString().trim();
         String name = editTextName.getText().toString().trim();
-        String date = taskDate.getText().toString().trim();
-        boolean done = ((CheckBox) findViewById(R.id.checkBoxStatus)).isChecked();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yy");
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        try {
+            Date date = sdf.parse(taskDate.getText().toString().trim());
+            boolean done = ((CheckBox) findViewById(R.id.checkBoxStatus)).isChecked();
 
-        if (TextUtils.isEmpty(task)) {
-            Toast.makeText(this, "You must enter a task.", Toast.LENGTH_LONG).show();
-            return;
+            if (TextUtils.isEmpty(task)) {
+                Toast.makeText(this, "You must enter a task.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            if (TextUtils.isEmpty(name)) {
+                Toast.makeText(this, "You must enter a name.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            String id = databaseTodos.push().getKey();
+            Todo todo = new Todo(id, task, name, date, done);
+
+            Task setValueTask = databaseTodos.child(id).setValue(todo);
+
+            setValueTask.addOnSuccessListener(new OnSuccessListener() {
+                @Override
+                public void onSuccess(Object o) {
+                    Toast.makeText(MainActivity.this,
+                            "Todo added.",Toast.LENGTH_LONG).show();
+                }
+            });
+
+            setValueTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(MainActivity.this,
+                            "something went wrong.\n" + e.toString(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (ParseException ex) {
+            Log.v("Exception", ex.getLocalizedMessage());
         }
 
-        if (TextUtils.isEmpty(name)) {
-            Toast.makeText(this, "You must enter a name.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        String id = databaseTodos.push().getKey();
-        Todo todo = new Todo(id, task, name, date, done);
-
-        Task setValueTask = databaseTodos.child(id).setValue(todo);
-
-        setValueTask.addOnSuccessListener(new OnSuccessListener() {
-            @Override
-            public void onSuccess(Object o) {
-                Toast.makeText(MainActivity.this,
-                        "Todo added.",Toast.LENGTH_LONG).show();
-            }
-        });
-
-        setValueTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(MainActivity.this,
-                        "something went wrong.\n" + e.toString(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
-    private void updateTodo(String id, String task, String name, String date, boolean done) {
+    private void updateTodo(String id, String task, String name, Date date, boolean done) {
         DatabaseReference dbRef = databaseTodos.child(id);
 
         Todo todo = new Todo(id, task, name, date, done);
@@ -164,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showUpdateDialog(final String id, String task, String name, String date, boolean status) {
+    private void showUpdateDialog(final String id, String task, String name, Date date, boolean status) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
 
         LayoutInflater inflater = getLayoutInflater();
@@ -179,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
         editTextName.setText(name);
 
         final EditText editTextDate = dialogView.findViewById(R.id.editTextDate);
-        editTextDate.setText(date);
+        editTextDate.setText(date.toString());
 
         final CheckBox editStatus = dialogView.findViewById(R.id.checkBoxStatus);
         editStatus.setChecked(status);
@@ -198,12 +208,17 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String task = editTextTask.getText().toString().trim();
                 String name = editTextName.getText().toString().trim();
-                String date = editTextDate.getText().toString().trim();
-                boolean done = editStatus.isChecked();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                try {
+                    Date date = sdf.parse(editTextDate.getText().toString().trim());
+                    boolean done = editStatus.isChecked();
 
-                updateTodo(id, task, name, date, done);
+                    updateTodo(id, task, name, date, done);
 
-                alertDialog.dismiss();
+                    alertDialog.dismiss();
+                } catch (ParseException ex) {
+                    Log.v("Exception", ex.getLocalizedMessage());
+                }
             }
         });
 

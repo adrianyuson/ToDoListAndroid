@@ -7,18 +7,18 @@ public class Todo {
     String taskId;
     String task;
     String who;
-    String taskDate;
+    Date dueDate;
     boolean done;
     public Todo() {}
     public Todo(String taskId,
                 String task,
                 String who,
-                String taskDate,
+                Date dueDate,
                 boolean done) {
         this.taskId = taskId;
         this.task = task;
         this.who = who;
-        this.taskDate = taskDate;
+        this.dueDate = dueDate;
         this.done = done;
     }
 
@@ -46,12 +46,12 @@ public class Todo {
         this.who = who;
     }
 
-    public String getDueDate() {
-        return taskDate;
+    public Date getDueDate() {
+        return dueDate;
     }
 
-    public void setDueDate(String taskDate) {
-        this.taskDate = taskDate;
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 
     public boolean isDone() {
