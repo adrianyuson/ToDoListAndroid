@@ -8,12 +8,10 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -68,14 +66,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Todo todo = todoList.get(position);
-
-//                String
-//                if(todo.isDone()) {
-//                    tvDone.setText("Done");
-//                }
-//                else {
-//                    tvDone.setText("Not yet done");
-//                }
 
                 showUpdateDialog(todo.getTaskId(),
                         todo.getTask(),
@@ -214,6 +204,39 @@ public class MainActivity extends AppCompatActivity {
                 updateTodo(id, task, name, date, done);
 
                 alertDialog.dismiss();
+            }
+        });
+
+        final Button btnDelete = dialogView.findViewById(R.id.btnDelete);
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteTodo(id);
+
+                alertDialog.dismiss();
+            }
+        });
+
+    }
+
+    private void deleteTodo(String id) {
+        DatabaseReference dbRef = databaseTodos.child(id);
+
+        Task setRemoveTask = dbRef.removeValue();
+        setRemoveTask.addOnSuccessListener(new OnSuccessListener() {
+            @Override
+            public void onSuccess(Object o) {
+                Toast.makeText(MainActivity.this,
+                        "Todo Deleted.",Toast.LENGTH_LONG).show();
+            }
+        });
+
+        setRemoveTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(MainActivity.this,
+                        "Something went wrong.\n" + e.toString(),
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
